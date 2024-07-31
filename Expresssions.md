@@ -9,5 +9,5 @@
 ### For retreiving the pipeline variables
 
 ```
-<+pipeline.variables.AppName>
+<+pipeline.variables.variable_name>
 ```
