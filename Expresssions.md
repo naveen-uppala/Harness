@@ -3,7 +3,7 @@
 ### For retreiving the secrets value in pipeline
 
 ```
-<+sercets.getValue("project.access_token")>
+<+secrets.getValue("project.access_token")>
 ```
 
 ### For retreiving the pipeline variables
