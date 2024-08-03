@@ -1,5 +1,5 @@
 docker run -d --cpus=1 --memory=2g \
-  --name harnes-delegate \
+  --name harness-delegate \
   --restart unless-stopped \
   -e DELEGATE_NAME=docker-delegate \
   -e NEXT_GEN=true \
