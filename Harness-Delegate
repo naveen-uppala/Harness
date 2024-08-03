@@ -1,0 +1,12 @@
+docker run -d --cpus=1 --memory=2g \
+  --name harnes-delegate \
+  --restart unless-stopped \
+  -e DELEGATE_NAME=docker-delegate \
+  -e NEXT_GEN=true \
+  -e DELEGATE_TYPE=DOCKER \
+  -e ACCOUNT_ID=XXXXXXXXXXXXXXXXX \
+  -e DELEGATE_TOKEN=XXXXXXXXXXXXXXXXXX \
+  -e DELEGATE_TAGS="" \
+  -e LOG_STREAMING_SERVICE_URL=https://app.harness.io/log-service/ \
+  -e MANAGER_HOST_AND_PORT=https://app.harness.io \
+  harness/delegate:24.07.83605
