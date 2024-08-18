@@ -15,7 +15,7 @@ docker run --cpus=1 --memory=2g \
 
 ################## To install any softwares on container, login as root user############
 
-docker exec -it --user root harnes-delegate /bin/bash
+docker exec -it --user root harness-delegate /bin/bash
 
 ############# To install terraform ################
 microdnf install -y zip unzip
