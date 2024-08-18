@@ -1,0 +1,232 @@
+pipeline:
+  name: ecs-fargate-deployments
+  identifier: Build_java
+  projectIdentifier: default_project
+  orgIdentifier: default
+  stages:
+    - stage:
+        name: Build
+        identifier: Build
+        description: ""
+        type: CI
+        spec:
+          caching:
+            enabled: true
+          cloneCodebase: true
+          platform:
+            os: Linux
+            arch: Amd64
+          runtime:
+            type: Cloud
+            spec: {}
+          execution:
+            steps:
+              - step:
+                  type: Run
+                  name: Docker Build
+                  identifier: Docker_Build
+                  spec:
+                    shell: Sh
+                    command: |-
+                      echo "Build docker image"
+                      ls 
+                      docker build -t <+pipeline.variables.AppName>:<+codebase.branch>-<+pipeline.sequenceId> .
+
+                      echo "Build Info"
+                      ls -lah
+                      docker images
+              - parallel:
+                  - step:
+                      type: Sonarqube
+                      name: Sonarqube
+                      identifier: Sonarqube_1
+                      spec:
+                        mode: orchestration
+                        config: default
+                        target:
+                          type: repository
+                          detection: auto
+                        advanced:
+                          log:
+                            level: info
+                          args:
+                            cli: "-Dsonar.projectName=<+pipeline.variables.AppName>"
+                        auth:
+                          access_token: <+secrets.getValue("SonarQube")>
+                          domain: https://sonarcloud.io/
+                          ssl: true
+                        tool:
+                          project_key: tcn_<+pipeline.variables.AppName>
+                  - step:
+                      type: AquaTrivy
+                      name: TrivyScan
+                      identifier: TrivyScan
+                      spec:
+                        mode: orchestration
+                        config: default
+                        target:
+                          type: container
+                          detection: auto
+                        advanced:
+                          log:
+                            level: info
+                          args:
+                            cli: "--format table"
+                        privileged: true
+                        image:
+                          type: local_image
+                          name: <+pipeline.variables.AppName>
+                          tag: <+codebase.branch>-<+pipeline.sequenceId>
+                  - step:
+                      type: Semgrep
+                      name: Semgrep
+                      identifier: Semgrep_1
+                      spec:
+                        mode: orchestration
+                        config: default
+                        target:
+                          type: repository
+                          detection: auto
+                        advanced:
+                          log:
+                            level: info
+                        auth:
+                          access_token: 460959180d5907726474f7d7503d41f9c85ecf8de282f2a978c4219f6ea87363
+              - step:
+                  type: Run
+                  name: Docker Push
+                  identifier: Docker_Push
+                  spec:
+                    shell: Sh
+                    command: |-
+                      aws configure set aws_access_key_id XXXXXXXXXXXXXXXX  && aws configure set aws_secret_access_key XXXXXXXXXXXXXXXXXXXXXXX
+
+                      aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin 381492302819.dkr.ecr.us-east-2.amazonaws.com
+                      docker tag <+pipeline.variables.AppName>:<+codebase.branch>-<+pipeline.sequenceId> 381492302819.dkr.ecr.us-east-2.amazonaws.com/<+pipeline.variables.AppName>:<+codebase.branch>-<+pipeline.sequenceId>
+                      docker push 381492302819.dkr.ecr.us-east-2.amazonaws.com/<+pipeline.variables.AppName>:<+codebase.branch>-<+pipeline.sequenceId>
+    - stage:
+        name: Deploy
+        identifier: Deploy
+        description: ""
+        type: Deployment
+        spec:
+          deploymentType: ECS
+          service:
+            serviceRef: ecsfargatesvc
+            serviceInputs:
+              serviceDefinition:
+                type: ECS
+                spec:
+                  artifacts:
+                    primary:
+                      primaryArtifactRef: <+input>
+                      sources: <+input>
+                  variables:
+                    - name: containerport
+                      type: String
+                      value: <+input>
+                    - name: memory
+                      type: String
+                      value: <+input>
+                    - name: cpu
+                      type: String
+                      value: <+input>
+                    - name: PriorityNumber
+                      type: String
+                      value: <+input>
+                    - name: targetGroupArn
+                      type: String
+                      value: <+pipeline.stages.Deploy.spec.provisioner.steps.Create_Target_Group.output.target_group_arn>
+                    - name: DesiredCount
+                      type: String
+                      value: <+input>
+          environment:
+            environmentRef: Dev
+            deployToAll: false
+            provisioner:
+              steps:
+                - step:
+                    type: TerraformApply
+                    name: Create Target Group
+                    identifier: Create_Target_Group
+                    spec:
+                      provisionerIdentifier: HarnessTargetGroup
+                      configuration:
+                        type: Inline
+                        spec:
+                          configFiles:
+                            store:
+                              spec:
+                                connectorRef: github_connector
+                                repoName: Infra-App-Deployment
+                                gitFetchType: Branch
+                                branch: main
+                                folderPath: Infra/tf-modules/tf-targetgroup/
+                              type: Github
+                          providerCredential:
+                            type: Aws
+                            spec:
+                              connectorRef: aws_connector
+                              region: us-east-2
+                              roleArn: ""
+                          varFiles:
+                            - varFile:
+                                type: Remote
+                                identifier: TargetGroupVariables
+                                spec:
+                                  store:
+                                    type: Github
+                                    spec:
+                                      gitFetchType: Branch
+                                      repoName: Infra-App-Deployment
+                                      branch: main
+                                      paths:
+                                        - Infra/tf-modules/tf-targetgroup/terraform.tfvars
+                                      connectorRef: github_connector
+                    timeout: 10m
+                    failureStrategies:
+                      - onFailure:
+                          errors:
+                            - AllErrors
+                          action:
+                            type: StageRollback
+            infrastructureDefinitions:
+              - identifier: ECS
+          execution:
+            steps:
+              - step:
+                  name: ECS Rolling Deploy
+                  identifier: ecsRollingDeploy
+                  type: EcsRollingDeploy
+                  timeout: 10m
+                  spec:
+                    sameAsAlreadyRunningInstances: false
+                    forceNewDeployment: false
+            rollbackSteps:
+              - step:
+                  name: ECS Rolling Rollback
+                  identifier: ecsRollingRollback
+                  type: EcsRollingRollback
+                  timeout: 10m
+                  spec: {}
+        tags: {}
+        failureStrategies:
+          - onFailure:
+              errors:
+                - AllErrors
+              action:
+                type: StageRollback
+  tags: {}
+  allowStageExecutions: true
+  variables:
+    - name: AppName
+      type: String
+      description: ""
+      required: false
+      value: <+input>
+  properties:
+    ci:
+      codebase:
+        connectorRef: github_connector
+        repoName: <+input>
+        build: <+input>
