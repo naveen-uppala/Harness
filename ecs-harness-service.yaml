@@ -1,22 +1,22 @@
 service:
-  name: ecs-fargate-svc
-  identifier: ecsfargatesvc
+  name: ecs-fargate
+  identifier: ecsfargate
   orgIdentifier: default
-  projectIdentifier: default_project
+  projectIdentifier: BATCH19
   serviceDefinition:
     spec:
       manifests:
         - manifest:
-            identifier: ecstaskdefinition
+            identifier: taskdefinition
             type: EcsTaskDefinition
             spec:
               store:
                 type: Github
                 spec:
-                  connectorRef: github_connector
+                  connectorRef: github
                   gitFetchType: Branch
                   paths:
-                    - /App/Frontend/harness-taskdefinition.json
+                    - App/Frontend/harness-taskdefinition.json
                   repoName: Infra-App-Deployment
                   branch: main
         - manifest:
@@ -26,10 +26,10 @@ service:
               store:
                 type: Github
                 spec:
-                  connectorRef: github_connector
+                  connectorRef: github
                   gitFetchType: Branch
                   paths:
-                    - /App/Frontend/harness-service.json
+                    - App/Frontend/harness-service.json
                   repoName: Infra-App-Deployment
                   branch: main
       artifacts:
@@ -37,24 +37,59 @@ service:
           primaryArtifactRef: <+input>
           sources:
             - spec:
-                connectorRef: aws_connector
+                connectorRef: aws
                 imagePath: <+pipeline.variables.AppName>
                 tag: <+input>
                 digest: ""
                 region: us-east-2
-              identifier: ECR
+              identifier: ecrrepository
               type: Ecr
       variables:
+        - name: DesiredCount
+          type: String
+          description: ""
+          required: false
+          value: <+input>
         - name: containername
           type: String
           description: ""
           required: false
           value: <+pipeline.variables.AppName>
+        - name: SubnetA
+          type: String
+          description: ""
+          required: false
+          value: subnet-0c2aa5d3cb9969e73
+        - name: SubnetB
+          type: String
+          description: ""
+          required: false
+          value: subnet-0d31b0f375f0aec3b
+        - name: SubnetC
+          type: String
+          description: ""
+          required: false
+          value: subnet-07291f280311243a2
+        - name: SecurityGroup
+          type: String
+          description: ""
+          required: false
+          value: sg-0fbf5ab008229e767
+        - name: targetGroupArn
+          type: String
+          description: ""
+          required: false
+          value: <+input>
         - name: containerport
           type: String
           description: ""
           required: false
-          value: "8080"
+          value: "80"
+        - name: executionRoleArn
+          type: String
+          description: ""
+          required: false
+          value: arn:aws:iam::339712808268:role/batch19-ecs-taskexecution-role
         - name: memory
           type: String
           description: ""
@@ -65,54 +100,9 @@ service:
           description: ""
           required: false
           value: <+input>
-        - name: executionRoleArn
-          type: String
-          description: ""
-          required: false
-          value: arn:aws:iam::381492302819:role/ecsTaskExecutionRole
         - name: region
           type: String
           description: ""
           required: false
           value: us-east-2
-        - name: VpcId
-          type: String
-          description: ""
-          required: false
-          value: vpc-00383e29bb7567ac7
-        - name: PriorityNumber
-          type: String
-          description: ""
-          required: false
-          value: <+input>
-        - name: targetGroupArn
-          type: String
-          description: ""
-          required: false
-          value: <+input>
-        - name: DesiredCount
-          type: String
-          description: ""
-          required: false
-          value: <+input>
-        - name: SubnetA
-          type: String
-          description: ""
-          required: false
-          value: subnet-0a2aebbdf06fc888b
-        - name: SubnetB
-          type: String
-          description: ""
-          required: false
-          value: subnet-0073844bcbf183fd0
-        - name: SubnetC
-          type: String
-          description: ""
-          required: false
-          value: subnet-0aa476740e263c06b
-        - name: SecurityGroup
-          type: String
-          description: ""
-          required: false
-          value: sg-0fb3ad29346ddbfa2
     type: ECS
