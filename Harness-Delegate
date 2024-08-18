@@ -1,7 +1,7 @@
 ################## Command to create Harness delegate docker container #########
 
-docker run -d --cpus=1 --memory=2g \
-  --name harness-delegate \
+docker run --cpus=1 --memory=2g \
+  -d --name harness-delegate \
   --restart unless-stopped \
   -e DELEGATE_NAME=docker-delegate \
   -e NEXT_GEN=true \
