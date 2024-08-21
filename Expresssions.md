@@ -6,10 +6,10 @@
 <+secrets.getValue("project.access_token")>
 ```
 
-### For retreiving the pipeline variables
+### For retreiving the AppName value pipeline variables
 
 ```
-<+pipeline.variables.variable_name>
+<+pipeline.variables.AppName>
 ```
 
 ### For retreiving the TargetGroup ARN from output variables of 'Create_Target_Group step' of 'Deploy' Stage
