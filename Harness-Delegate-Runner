@@ -32,3 +32,10 @@ chmod 700 get_helm.sh
 curl -L0 https://dl.k8s.io/release/v1.24.3/bin/linux/amd64/kubectl -o kubectl
 chmod +x ./kubectl
 mv kubectl /opt/harness-delegate/custom-client-tools/kubectl
+
+
+################## To install Runner #####################
+
+sudo wget https://github.com/harness/harness-docker-runner/releases/download/v0.1.15/harness-docker-runner-linux-amd64
+sudo chmod +x harness-docker-runner-linux-amd64
+sudo nohup ./harness-docker-runner-linux-amd64 server &
