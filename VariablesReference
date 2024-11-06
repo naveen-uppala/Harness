@@ -1,0 +1,13 @@
+##Reference variables
+
+
+For custom variables, the expression you use depends on where you created the variable and from where you are referencing the variable. For example:
+
+Account variable reference: <+variable.account.VARIABLE_NAME>
+Org variable reference: <+variable.org.VARIABLE_NAME>
+Project variable reference: <+variable.VARIABLE_NAME>
+Pipeline variable reference: <+pipeline.variables.VARIABLE_NAME>
+Stage variable reference (within the same stage where you defined it): <+stage.variables.VARIABLE_NAME>
+StepGroup variable reference (within the same step group where you defined it): <+stepGroup.variables.VARIABLE_NAME>
+Service variable reference: <+serviceVariables.VARIABLE_NAME>
+Environment variable reference: <+env.variables.VARIABLE_NAME>
