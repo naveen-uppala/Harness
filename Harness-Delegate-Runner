@@ -13,29 +13,46 @@ docker run --cpus=1 --memory=2g \
   -e MANAGER_HOST_AND_PORT=https://app.harness.io \
   harness/delegate:24.07.83605
 
-################## To install any softwares on container, login as root user############
-
-docker exec -it --user root harness-delegate /bin/bash
-
-############# To install terraform ################
-microdnf install -y zip unzip
-curl -O -L  https://releases.hashicorp.com/terraform/0.12.25/terraform_0.12.25_linux_amd64.zip
-unzip terraform_0.12.25_linux_amd64.zip
-mv ./terraform /usr/bin/
-
-############# To install Helm #####
-curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
-chmod 700 get_helm.sh
-./get_helm.sh
-
-############# To install Kubectl #####
-curl -L0 https://dl.k8s.io/release/v1.24.3/bin/linux/amd64/kubectl -o kubectl
-chmod +x ./kubectl
-mv kubectl /opt/harness-delegate/custom-client-tools/kubectl
-
-
 ################## To install Runner #####################
 
 sudo wget https://github.com/harness/harness-docker-runner/releases/download/v0.1.15/harness-docker-runner-linux-amd64
 sudo chmod +x harness-docker-runner-linux-amd64
 sudo nohup ./harness-docker-runner-linux-amd64 server &
+
+
+
+
+
+
+
+
+#################################### To install any softwares on container, login as root user ####################################
+#################################### To install any softwares on container, login as root user ####################################
+#################################### To install any softwares on container, login as root user ####################################
+
+docker exec -it --user root harness-delegate /bin/bash
+
+
+############# Download aws-iam-authenticator #############
+curl -Lo aws-iam-authenticator https://github.com/kubernetes-sigs/aws-iam-authenticator/releases/download/v0.5.9/aws-iam-authenticator_0.5.9_linux_amd64
+chmod +x ./aws-iam-authenticator
+// Add the binary to PATH
+mv ./aws-iam-authenticator /usr/local/bin
+// Verify the binary
+aws-iam-authenticator help
+
+############# To install terraform #############
+microdnf install -y zip unzip
+curl -O -L  https://releases.hashicorp.com/terraform/0.12.25/terraform_0.12.25_linux_amd64.zip
+unzip terraform_0.12.25_linux_amd64.zip
+mv ./terraform /usr/bin/
+
+############# To install Helm #############
+curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+chmod 700 get_helm.sh
+./get_helm.sh
+
+############# To install Kubectl #############
+curl -L0 https://dl.k8s.io/release/v1.24.3/bin/linux/amd64/kubectl -o kubectl
+chmod +x ./kubectl
+mv kubectl /opt/harness-delegate/custom-client-tools/kubectl
