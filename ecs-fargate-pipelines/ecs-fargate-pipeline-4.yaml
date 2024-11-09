@@ -1,0 +1,151 @@
+pipeline:
+  name: eks-deployment
+  identifier: batch20
+  projectIdentifier: HPM
+  orgIdentifier: default
+  tags: {}
+  properties:
+    ci:
+      codebase:
+        connectorRef: github_connector
+        repoName: <+input>
+        build: <+input>
+        sparseCheckout: []
+  stages:
+    - stage:
+        name: Build
+        identifier: Build
+        description: ""
+        type: CI
+        spec:
+          cloneCodebase: true
+          platform:
+            os: Linux
+            arch: Amd64
+          runtime:
+            type: Cloud
+            spec: {}
+          execution:
+            steps:
+              - step:
+                  type: Sonarqube
+                  name: Sonarqube
+                  identifier: Sonarqube
+                  spec:
+                    mode: orchestration
+                    config: default
+                    target:
+                      type: repository
+                      detection: auto
+                    advanced:
+                      log:
+                        level: info
+                      args:
+                        cli: " -Dsonar.organization=<+variable.sonarqube_org> -Dsonar.projectName=<+pipeline.variables.AppName> -Dsonar.exclusions=**/*.java"
+                    auth:
+                      access_token: <+secrets.getValue("sonar_token")>
+                      domain: https://sonarcloud.io/
+                      ssl: true
+              - step:
+                  type: BuildAndPushECR
+                  name: BuildAndPushECR
+                  identifier: BuildAndPushECR
+                  spec:
+                    connectorRef: aws_connector
+                    region: <+pipeline.variables.region>
+                    account: <+pipeline.variables.aws_account_id>
+                    imageName: <+pipeline.variables.AppName>
+                    tags:
+                      - <+codebase.branch>-<+pipeline.sequenceId>
+              - step:
+                  type: AquaTrivy
+                  name: AquaTrivy
+                  identifier: AquaTrivy
+                  spec:
+                    mode: orchestration
+                    config: default
+                    target:
+                      type: container
+                      detection: auto
+                    advanced:
+                      log:
+                        level: info
+                    privileged: true
+                    image:
+                      region: <+pipeline.variables.region>
+                      type: aws_ecr
+                      access_id: <+secrets.getValue("aws_access_key")>
+                      access_token: <+secrets.getValue("aws_secret_key")>
+                      tag: <+codebase.branch>-<+pipeline.sequenceId>
+                      name: <+pipeline.variables.AppName>
+          caching:
+            enabled: false
+            paths: []
+          buildIntelligence:
+            enabled: false
+    - stage:
+        name: Deploy
+        identifier: Deploy
+        description: ""
+        type: Deployment
+        spec:
+          deploymentType: Kubernetes
+          service:
+            serviceRef: eks
+            serviceInputs:
+              serviceDefinition:
+                type: Kubernetes
+                spec:
+                  artifacts:
+                    primary:
+                      primaryArtifactRef: <+input>
+                      sources: <+input>
+          environment:
+            environmentRef: Development
+            deployToAll: false
+            infrastructureDefinitions:
+              - identifier: EKS_Cluster
+          execution:
+            steps:
+              - step:
+                  name: Rollout Deployment
+                  identifier: rolloutDeployment
+                  type: K8sRollingDeploy
+                  timeout: 10m
+                  spec:
+                    skipDryRun: false
+                    pruningEnabled: false
+            rollbackSteps:
+              - step:
+                  name: Rollback Rollout Deployment
+                  identifier: rollbackRolloutDeployment
+                  type: K8sRollingRollback
+                  timeout: 10m
+                  spec:
+                    pruningEnabled: false
+        tags: {}
+        failureStrategies:
+          - onFailure:
+              errors:
+                - AllErrors
+              action:
+                type: StageRollback
+        delegateSelectors:
+          - docker-delegate
+  variables:
+    - name: AppName
+      type: String
+      description: ""
+      required: false
+      value: customer
+    - name: region
+      type: String
+      description: ""
+      required: false
+      value: us-east-2
+    - name: aws_account_id
+      type: String
+      description: ""
+      required: false
+      value: "054037107230"
+  allowStageExecutions: true
