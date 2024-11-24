@@ -140,10 +140,15 @@ pipeline:
             description: ""
             required: true
             value: <+input>
+          - name: routingRulePath
+            type: String
+            description: ""
+            required: true
+            value: <+input>
   variables:
     - name: AppName
       type: String
       description: ""
       required: false
-      value: customer
+      value: <+input>
   allowStageExecutions: true
