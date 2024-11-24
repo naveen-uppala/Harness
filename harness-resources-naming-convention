@@ -14,6 +14,21 @@
 
 2) Github Connector: github_connector
 
+#################### Project variables ######################
+
+1) region
+
+2) aws_account_id
+
+3) sonarqube_org
+
+#################### EKS Service ######################
+
+  name: eks-service
+  identifier: eksservice
+  orgIdentifier: default
+  projectIdentifier: HPM
+
 #################### EKS Pipeline ######################
 
 1) pipeline name: eks-deployment
@@ -35,22 +50,8 @@
 
 4) Stage 1: Build, Stage 2: Deploy
 
-#################### Project variables ######################
 
-1) region
-
-2) aws_account_id
-
-3) sonarqube_org
-
-#################### EKS Service ######################
-
-  name: eks-service
-  identifier: eksservice
-  orgIdentifier: default
-  projectIdentifier: HPM
-
-  #################### EKS Service ######################
+  #################### ECS Service ######################
 
   name: ecs-fargate-service
   identifier: ecsfargateservice
