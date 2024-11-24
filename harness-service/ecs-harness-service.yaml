@@ -1,8 +1,8 @@
 service:
-  name: ecs-fargate
-  identifier: ecsfargate
+  name: ecs-fargate-service
+  identifier: ecsfargateservice
   orgIdentifier: default
-  projectIdentifier: BATCH19
+  projectIdentifier: HPM
   serviceDefinition:
     spec:
       manifests:
@@ -13,7 +13,7 @@ service:
               store:
                 type: Github
                 spec:
-                  connectorRef: github
+                  connectorRef: github_connector
                   gitFetchType: Branch
                   paths:
                     - App/Frontend/harness-taskdefinition.json
@@ -26,7 +26,7 @@ service:
               store:
                 type: Github
                 spec:
-                  connectorRef: github
+                  connectorRef: github_connector
                   gitFetchType: Branch
                   paths:
                     - App/Frontend/harness-service.json
@@ -37,11 +37,11 @@ service:
           primaryArtifactRef: <+input>
           sources:
             - spec:
-                connectorRef: aws
+                connectorRef: aws_connector
                 imagePath: <+pipeline.variables.AppName>
                 tag: <+input>
                 digest: ""
-                region: us-east-2
+                region: <+variable.region>
               identifier: ecrrepository
               type: Ecr
       variables:

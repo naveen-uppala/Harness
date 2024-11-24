@@ -1,0 +1,40 @@
+service:
+  name: eks-service
+  identifier: eksservice
+  orgIdentifier: default
+  projectIdentifier: HPM
+  serviceDefinition:
+    spec:
+      manifests:
+        - manifest:
+            identifier: customer
+            type: HelmChart
+            spec:
+              store:
+                type: Github
+                spec:
+                  connectorRef: github_connector
+                  gitFetchType: Branch
+                  folderPath: App/Backend/
+                  repoName: Infra-App-Deployment
+                  branch: main
+              subChartPath: <+pipeline.variables.AppName>
+              valuesPaths:
+                - App/Backend/customer/harness_values.yaml
+              skipResourceVersioning: false
+              enableDeclarativeRollback: false
+              helmVersion: V3
+              fetchHelmChartMetadata: false
+      artifacts:
+        primary:
+          primaryArtifactRef: <+input>
+          sources:
+            - spec:
+                connectorRef: aws_connector
+                imagePath: <+pipeline.variables.AppName>
+                tag: <+input>
+                digest: ""
+                region: us-east-2
+              identifier: ECR_REPOSITORY
+              type: Ecr
+    type: Kubernetes

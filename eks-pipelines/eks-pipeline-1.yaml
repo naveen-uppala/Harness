@@ -1,6 +1,6 @@
 pipeline:
   name: eks-deployment
-  identifier: batch20
+  identifier: eksdeployment
   projectIdentifier: HPM
   orgIdentifier: default
   tags: {}
@@ -52,8 +52,8 @@ pipeline:
                   identifier: BuildAndPushECR
                   spec:
                     connectorRef: aws_connector
-                    region: <+pipeline.variables.region>
-                    account: <+pipeline.variables.aws_account_id>
+                    region: <+variable.region>
+                    account: <+variable.aws_account_id>
                     imageName: <+pipeline.variables.AppName>
                     tags:
                       - <+codebase.branch>-<+pipeline.sequenceId>
@@ -72,15 +72,17 @@ pipeline:
                         level: info
                     privileged: true
                     image:
-                      region: <+pipeline.variables.region>
+                      region: <+variable.region>
                       type: aws_ecr
                       access_id: <+secrets.getValue("aws_access_key")>
                       access_token: <+secrets.getValue("aws_secret_key")>
                       tag: <+codebase.branch>-<+pipeline.sequenceId>
                       name: <+pipeline.variables.AppName>
           caching:
-            enabled: false
-            paths: []
+            enabled: true
+            paths:
+              - /harness/.m2/repository
+            override: false
           buildIntelligence:
             enabled: false
     - stage:
@@ -91,7 +93,7 @@ pipeline:
         spec:
           deploymentType: Kubernetes
           service:
-            serviceRef: eks
+            serviceRef: eksservice
             serviceInputs:
               serviceDefinition:
                 type: Kubernetes
@@ -104,7 +106,7 @@ pipeline:
             environmentRef: Development
             deployToAll: false
             infrastructureDefinitions:
-              - identifier: EKS_Cluster
+              - identifier: eks
           execution:
             steps:
               - step:
@@ -132,20 +134,16 @@ pipeline:
                 type: StageRollback
         delegateSelectors:
           - docker-delegate
+        variables:
+          - name: replicas
+            type: String
+            description: ""
+            required: true
+            value: <+input>
   variables:
     - name: AppName
       type: String
       description: ""
       required: false
       value: customer
-    - name: region
-      type: String
-      description: ""
-      required: false
-      value: us-east-2
-    - name: aws_account_id
-      type: String
-      description: ""
-      required: false
-      value: "054037107230"
   allowStageExecutions: true

@@ -1,0 +1,58 @@
+#################### Secrets ######################
+
+1) SonarQube token : sonar_token
+
+2) Github token: github_token
+
+3) aws access key id: aws_access_key
+
+4) aws secret key: aws_secret_key
+
+#################### Connectors ######################
+
+1) AWS Connector: aws_connector
+
+2) Github Connector: github_connector
+
+#################### EKS Pipeline ######################
+
+1) pipeline name: eks-deployment
+
+2) project name: HPM
+
+3) Organization: default
+
+4) Stage 1: Build, Stage 2: Deploy
+
+
+#################### ECS Pipeline ######################
+
+1) pipeline name: ecs-deployment
+
+2) project name: HPM
+
+3) Organization: default
+
+4) Stage 1: Build, Stage 2: Deploy
+
+#################### Project variables ######################
+
+1) region
+
+2) aws_account_id
+
+3) sonarqube_org
+
+#################### EKS Service ######################
+
+  name: eks-service
+  identifier: eksservice
+  orgIdentifier: default
+  projectIdentifier: HPM
+
+  #################### EKS Service ######################
+
+  name: ecs-fargate-service
+  identifier: ecsfargateservice
+  orgIdentifier: default
+  projectIdentifier: HPM
